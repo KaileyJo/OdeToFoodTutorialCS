@@ -6,6 +6,8 @@ namespace OdeToFood.Migrations
     using System.Data.Entity;
     using System.Data.Entity.Migrations;
     using System.Linq;
+    using System.Web.Security;
+    using WebMatrix.WebData;
 
     internal sealed class Configuration : DbMigrationsConfiguration<OdeToFood.Models.OdeToFoodDb>
     {
@@ -29,13 +31,37 @@ namespace OdeToFood.Migrations
                         {
                         new RestaurantReview { Rating = 9, Body = "Great food!", ReviewerName = "Scott"}
                         }
-                }
+            }
             );
 
             for (int i = 0; i < 1000; i++)
             {
                 context.Restaurants.AddOrUpdate(r => r.Name,
                     new Restaurant { Name = i.ToString(), City = "Nowhere", Country = "USA" });
+            }
+
+            SeedMembership();
+        }
+
+        private void SeedMembership()
+        {
+            WebSecurity.InitializeDatabaseConnection("DefaultConnection",
+                "UserProfile", "UserId", "UserName", autoCreateTables: true);
+
+            var roles = (SimpleRoleProvider)Roles.Provider;
+            var membership = (SimpleMembershipProvider)Membership.Provider;
+
+            if (!roles.RoleExists("Admin"))
+            {
+                roles.CreateRole("Admin");
+            }
+            if (membership.GetUser("sallen", false) == null)
+            {
+                membership.CreateUserAndAccount("sallen", "imalittleteapot");
+            }
+            if (!roles.GetRolesForUser("sallen").Contains("Admin"))
+            {
+                roles.AddUsersToRoles(new[] { "sallen" }, new[] { "admin" });
             }
         }
     }
